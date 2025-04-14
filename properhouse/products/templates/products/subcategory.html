@@ -1,0 +1,62 @@
+{% extends "products/layout.html" %}
+
+{% block body %}
+
+    {{ subcategory.name }}
+    <br>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-4 order1">
+
+
+                <form action="{% url 'subcategory' category.name subcategory.name %}" method="GET">
+                    {% csrf_token %}
+                    <label for="brand">Brand</label>
+                    {% for brand in brands %}
+                        <br>
+                        <input type="checkbox" id="brand" name="brand" value="{{ brand.id }}"> {{ brand.name }}
+                    {% endfor %}
+                    {% for subcategoryproperty in subcategoryproperties %}
+                        <br>
+                        {% if subcategoryproperty.data_type == "STRING" %}
+                            <label for="{{ subcategoryproperty.name }}">{{ subcategoryproperty.name }}</label>
+                                {% for modelproperty in modelproperties %}
+                                    {%  if modelproperty.property == subcategoryproperty  %}
+                                        <br>
+                                        <input type="checkbox" id="{{ subcategoryproperty.name }}" name="{{ subcategoryproperty.id }}" value="{{ modelproperty.value }}"> {{ modelproperty.value }}
+                                    {% endif %}
+                                {% endfor %}
+                        {% elif subcategoryproperty.data_type == "DECIMAL" %}
+                            <label for="{{ subcategoryproperty.id }}">{{ subcategoryproperty.name }}</label>
+                                <br>
+                                <input type="number" id="{{ subcategoryproperty.id }}" name="min_{{ subcategoryproperty.id }}" min="0" max="9999" value="0">
+                                <input type="number" id="{{ subcategoryproperty.id }}" name="max_{{ subcategoryproperty.id }}" min="0" max="9999" value="9999">
+                        {% endif %}
+                        {% endfor %}
+                        <br>
+                        <input type="reset">
+                        <input type="submit" value="Submit">
+                </form>
+
+
+
+
+            </div>
+            <div class="col-8 order2">
+                {% for product in products %}
+                    <a class="text-decoration-none text-dark" href="{% url 'product' category.name subcategory.name product.id %}">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4 class="card-title">{{ product.name }}</h4>
+                            </div>
+                            <div class="card-body">
+                                <img class="card-img-top" src="{{ product.image.url }}" alt="{{ product.name }}">
+                                <p class="card-text">{{ product.name }}</p>
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

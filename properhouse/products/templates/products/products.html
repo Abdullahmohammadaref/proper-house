@@ -1,5 +1,13 @@
 {% extends "products/layout.html" %}
 
-{% block body_title %}
-    Home
+{% block body %}
+    <hr>
+    {% for category in categories %}
+        <a href="{% url 'category' category.name %}">{{ category.name }}</a>
+            {% for subcategory in subcategories %}
+                {% if subcategory.category == category %}
+                    <a href="{% url 'subcategory' category.name subcategory.name %}">{{ subcategory.name }}</a>
+                {% endif %}
+            {% endfor %}
+    {% endfor %}
 {% endblock %}
