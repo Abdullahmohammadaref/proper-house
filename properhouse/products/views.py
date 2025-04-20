@@ -21,7 +21,7 @@ def about(request):
 def products(request):
     return render(request, 'products/products.html',{
         "categories": Category.objects.all(),
-        "subcategories": SubCategory.objects.all(),
+        "subcategories": Subcategory.objects.all(),
     })
 
 def locations(request):
@@ -44,10 +44,9 @@ def category(request, category_name):
 
 def subcategory(request, subcategory_name, category_name):
     category = Category.objects.get(name=category_name)
-    subcategory = SubCategory.objects.get(name=subcategory_name, category=category)
+    subcategory = Subcategory.objects.get(name=subcategory_name, category=category)
     products = Product.objects.filter(category=subcategory)
-    subcategoryproperties = SubCategoryProperty.objects.filter(category=subcategory)
-    modelproperties = ModelProperty.objects.filter(property__in=subcategoryproperties)
+
 
     if request.method == "GET":
         submitted_data = {
@@ -63,34 +62,12 @@ def subcategory(request, subcategory_name, category_name):
                         products = products.exclude(id=product.id)
                     else:
                         continue
-            elif key.startswith("max_"):
-                key= int(key.replace("max_", ""))
-                initial_value = ModelProperty.objects.get(property=SubCategoryProperty.objects.get(id=key)).value.split("-")[1]
-                if initial_value > key:
-                    products = products.exclude(Product.objects.get(category=Category.objects.get(id=key)))
-            elif key.startswith("min_"):
-                key= int(key.replace("min_", ""))
-                initial_value = ModelProperty.objects.get(property=SubCategoryProperty.objects.get(id=key)).value.split("-")[0]
-                if initial_value < key:
-                    products = products.exclude(Product.objects.get(category=Category.objects.get(id=key)))
-            else:
-                modelproperties = ModelProperty.objects.filter(
-                    model__in=ProductModel.objects.filter(product__in=products),
-                    property__in=SubCategoryProperty.objects.filter(id=key))
-                for modelproperty in modelproperties:
-                    if modelproperty.value != value:
-                        products = products.exclude(id=modelproperty.model.product.id)
-                    else:
-                        continue
-
 
     return render(request, 'products/subcategory.html', {
         'subcategory': subcategory,
         'category': category,
         'products': products,
-        'subcategoryproperties': subcategoryproperties,
         'brands': Brand.objects.all(),
-        'modelproperties': modelproperties
     })
 
 

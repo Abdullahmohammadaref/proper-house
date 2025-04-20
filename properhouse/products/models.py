@@ -3,183 +3,250 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
+
 # Create your models here.
+class String(models.Model):
+    value = models.CharField(max_length=50, unique=True, blank=False, null=False)
+
+    def __str__(self):
+        return f"{self.value}"
+
+
+class Integer(models.Model):
+    value = models.IntegerField(unique=True, blank=False, null=False)
+
+    def __str__(self):
+        return f"{self.value}"
+
+
+class Decimal(models.Model):
+    value = models.DecimalField(unique=True, blank=False, null=False, max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.value}"
+
+
+class RangedDecimal(models.Model):
+    min_value = models.DecimalField(max_digits=10, decimal_places=2, unique=True, blank=False, null=False)
+    max_value = models.DecimalField(max_digits=10, decimal_places=2, unique=True, blank=False, null=False)
+
+    def values_range(self):
+        values_range = (self.min_value, self.max_value)
+        return values_range
+
+    def __str__(self):
+        return f"{self.min_value} - {self.max_value}"
+
+
+class RangedInteger(models.Model):
+    min_value = models.IntegerField(unique=True, blank=False, null=False)
+    max_value = models.IntegerField(unique=True, blank=False, null=False)
+
+    def values_range(self):
+        values_range = (self.min_value, self.max_value)
+        return values_range
+
+    def __str__(self):
+        return f"{self.min_value} - {self.max_value}"
+
 class Category(models.Model):
-    name = models.CharField(max_length=50, unique=True, blank=False)
+    name = models.CharField(max_length=50, unique=True, blank=False, null=False)
 
     def __str__(self):
-        return self.name
+        return f"{self.name}"
 
-class Brand(models.Model):
-    name = models.CharField(max_length=50, unique=True, blank=False)
-
+class Attribute(models.Model):
+    name = models.CharField(max_length=50, unique=True, blank=False, null=False)
+    value = models.ManyToManyField()
     def __str__(self):
-        return self.name
+        return f"{self.name}"
 
-class SubCategory(models.Model):
-    name = models.CharField(max_length=50, unique=True, blank=False)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, blank=False)
-
-    class Meta:
-        unique_together = ('category', 'name')
-
-    def __str__(self):
-        return f"{self.category} - {self.name}"
-
-class SubCategoryProperty(models.Model):
-    DATA_TYPES = [
-        ('STRING', 'String'),
-        ('INTEGER', 'Integer'),
-        ('DECIMAL', 'Decimal'),
-        ('MULTIPLE_STRINGS', 'multiple_strings'),
-        ('MULTIPLE_INTEGERS', 'multiple_integers'),
-        ('MULTIPLE_DECIMALS', 'multiple_decimals'),
-    ]
-
-    category = models.ForeignKey(
-        SubCategory,
-        on_delete=models.CASCADE,
-        related_name='properties'
+class Subcategory(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    name = models.CharField(max_length=50, unique=True, blank=False, null=False)
+    attribute = models.ManyToManyField(
+        Attribute,
+        through='SubcategoryAttribute',
+        related_name='subcategory'
     )
-
-    name = models.CharField(max_length=50)
-    data_type = models.CharField(max_length=20, choices=DATA_TYPES, default='STRING')
-    ranged = models.BooleanField(default=False)
-
-    class Meta:
-        unique_together = ('category', 'name')
 
     def __str__(self):
         return f"{self.name}"
 
 
-class Product(models.Model):
-    name = models.CharField(max_length=200, blank=False)
-    category = models.ForeignKey(
-        SubCategory,
-        on_delete=models.CASCADE,
-        related_name='products'
+
+
+class AttributeValue(models.Model):
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    value =
+
+    class Meta:
+        unique_together = ('attribute',)
+
+    def __str__(self):
+        return f"{self.attribute}:{self.value}"
+    """
+
+
+    class AttributeValueString(models.Model):
+    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
+    string = models.ForeignKey(String, on_delete=models.CASCADE)
+
+class AttributeValueInteger(models.Model):
+    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
+    integer = models.ForeignKey(Integer, on_delete=models.CASCADE)
+
+class AttributeValueDecimal(models.Model):
+    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
+    decimal = models.ForeignKey(Decimal, on_delete=models.CASCADE)
+
+class AttributeValueRangedDecimal(models.Model):
+    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
+    ranged_decimal = models.ForeignKey(RangedDecimal, on_delete=models.CASCADE)
+
+class AttributeValueRangedInteger(models.Model):
+    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
+    ranged_integer = models.ForeignKey(RangedInteger, on_delete=models.CASCADE)
+    """
+
+
+"""
+class AttributeValue(models.Model):
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    string_values = models.JSONField(default=list, null=True, blank=True)
+    integer_values = ...
+    decimal_values = ...
+    ranged_integer_value = ..
+    ranged_decimal_value = ...
+
+    def value(self):
+        values = 0
+        attribute_value = None
+        value_attributes = [self.string_values, self.integer_values, self.decimal_values, self.ranged_integer_value, self.ranged_decimal_value]
+        for value in value_attributes:
+            if value is not None:
+                values += values
+                attribute_value = value
+        if values != 1:
+            raise ValueError
+        else:
+            return attribute_value
+
+    value = value
+
+    class Meta:
+        unique_together = ('name', 'value')
+
+    def __str__(self):
+
+         f"{self.attribute}:{self.value}"   ## there is a missing return here 
+"""
+
+
+class Media(models.Model):
+    brand = models.OneToOneField(
+        'Brand',
+        on_delete=models.SET_NULL,
+        null=True,  # Allow Media without a Brand
+        blank=True,  # Allow empty in forms/admin
+        related_name='media'  # Access Media from Brand via `brand.media`
     )
-    brand = models.ForeignKey(
-        Brand,
-        on_delete=models.CASCADE,
-        related_name='products'
+    category = models.OneToOneField(
+        'Category',
+        on_delete=models.SET_NULL,
+        null=True,  # Allow Media without a Brand
+        blank=True,  # Allow empty in forms/admin
+        related_name='media'  # Access Media from Brand via `brand.media`
+    )
+    subcategory = models.OneToOneField(
+        'Subcategory',
+        on_delete=models.SET_NULL,
+        null=True,  # Allow Media without a Brand
+        blank=True,  # Allow empty in forms/admin
+        related_name='media'  # Access Media from Brand via `brand.media`
     )
     image = models.ImageField(
         upload_to='products/',
         blank=True,
+        null=True,
         default='products/default.png'
     )
     pdf = models.FileField(
         upload_to='pdfs/',
         blank=True,
+        null=True,
         validators=[FileExtensionValidator(['pdf'])],
         help_text='Upload product specification PDF'
     )
 
     class Meta:
-        unique_together = ('category', 'name')
+        unique_together = ('image', 'pdf')
+
+
+class Brand(models.Model):
+    name = models.CharField(max_length=50, unique=True, blank=False, null=False)
 
     def __str__(self):
-        return f"{self.brand} - {self.category} - {self.name} "
+        return f"{self.name}"
 
 
-class ProductModel(models.Model):
-    product = models.ForeignKey(
-        Product,
-        on_delete=models.CASCADE,
-        related_name='models'
-    )
-    name = models.CharField(max_length=50)
+class SubcategoryAttribute(models.Model):
+    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = ('product', 'name')
+        unique_together = ('attribute', 'subcategory')
+
+
+class Product(models.Model):
+    brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
+    subcategory = models.ForeignKey(Subcategory, on_delete=models.CASCADE)
+    name = models.CharField(max_length=50, unique=True, blank=False, null=False)
+
+    class Meta:
+        unique_together = ('brand', 'subcategory', 'name')
 
     def __str__(self):
-        return f"{self.product.brand.name} {self.name}"
-
-"""
-class BaseProperty(models.Model):
-    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    object_id = models.PositiveIntegerField()
-    content_object = GenericForeignKey('content_type', 'object_id')
-
-    class Meta:
-        abstract = True
-
-class PropertyString(BaseProperty):
-    value = models.CharField(max_length=255)
-
-class PropertyInteger(BaseProperty):
-    value = models.IntegerField()
-
-class PropertyDecimal(BaseProperty):
-    value = models.DecimalField(max_digits=10, decimal_places=2)
-
-class PropertyMultipleStrings(BaseProperty):
-    values = models.JSONField(default=list)
-
-class PropertyMultipleIntegers(BaseProperty):
-    values = models.JSONField(default=list)
-
-class PropertyMultipleDecimals(BaseProperty):
-    values = models.JSONField(default=list)
-
-class PropertyRangeInteger(BaseProperty):
-    min_value = models.IntegerField()
-    max_value = models.IntegerField()
-
-class PropertyRangeDecimal(BaseProperty):
-    min_value = models.DecimalField(max_digits=10, decimal_places=2)
-    max_value = models.DecimalField(max_digits=10, decimal_places=2)
+        return f"{self.name}"
 
 
-
-
-value_content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
-    value_object_id = models.PositiveIntegerField()
-    value = GenericForeignKey('value_content_type', 'value_object_id')
-    
-    
-    
-    
-    
-    expected_type = self.property.data_type
-        actual_type = self.value_content_type.model_class().__name__.lower()
-        if not actual_type.startswith(expected_type.split('_')[0].lower()):
-            raise ValueError(f"Expected {expected_type} but got {actual_type}")
-"""
-
-
-
-class ModelProperty(models.Model):
-    model = models.ForeignKey(
-        ProductModel,
-        on_delete=models.CASCADE,
-        related_name='properties'
-    )
-    property = models.ForeignKey(
-        SubCategoryProperty,
-        on_delete=models.CASCADE
-    )
-
-    value = model.CharField(max_length=255, default='')
-
+class Model(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    model_letter = models.CharField(max_length=10, blank=True, null=False)
+    model_number = models.IntegerField(blank=False, null=False)
+    media = models.ManyToManyField(Media, through="ModelMedia")
+    attribute_values = models.ManyToManyField(AttributeValue, through="ModelAttribute")
 
     class Meta:
-        unique_together = ('model', 'property')
+        unique_together = ('product', 'model_letter', 'model_number')
 
     def __str__(self):
-        return f"{self.model} - {self.property.name}"
+        return f"{self.model_letter}{self.model_number}"
 
-    def clean(self):
-        super().clean()
-        if self.property.category != self.model.product.category:
-            raise ValueError("Category must be equal to product.category")
 
-    def save(self, *args, **kwargs):
-        self.full_clean()  # Enforces validation
-        super().save(*args, **kwargs)
+class ModelAttribute(models.Model):
+    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('attribute_value', 'model')
+
+
+class ModelMedia(models.Model):
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    media = models.ForeignKey(Media, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('media', 'model')
+
+
+
+
+
+
+
+
+
 
 
 
