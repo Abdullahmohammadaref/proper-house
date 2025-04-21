@@ -1,8 +1,5 @@
 from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
-
 
 # Create your models here.
 class String(models.Model):
@@ -11,20 +8,17 @@ class String(models.Model):
     def __str__(self):
         return f"{self.value}"
 
-
 class Integer(models.Model):
     value = models.IntegerField(unique=True, blank=False, null=False)
 
     def __str__(self):
         return f"{self.value}"
 
-
 class Decimal(models.Model):
     value = models.DecimalField(unique=True, blank=False, null=False, max_digits=10, decimal_places=2)
 
     def __str__(self):
         return f"{self.value}"
-
 
 class RangedDecimal(models.Model):
     min_value = models.DecimalField(max_digits=10, decimal_places=2, null=False)
@@ -54,7 +48,6 @@ class RangedInteger(models.Model):
 
     def __str__(self):
         return f"{self.min_value} - {self.max_value}"
-
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True, blank=False, null=False)
@@ -88,23 +81,23 @@ class Media(models.Model):
     brand = models.OneToOneField(
         'Brand',
         on_delete=models.SET_NULL,
-        null=True,  # Allow Media without a Brand
-        blank=True,  # Allow empty in forms/admin
-        related_name='media'  # Access Media from Brand via `brand.media`
+        null=True,
+        blank=True,
+        related_name='media'
     )
     category = models.OneToOneField(
         'Category',
         on_delete=models.SET_NULL,
-        null=True,  # Allow Media without a Brand
-        blank=True,  # Allow empty in forms/admin
-        related_name='media'  # Access Media from Brand via `brand.media`
+        null=True,
+        blank=True,
+        related_name='media'
     )
     subcategory = models.OneToOneField(
         'Subcategory',
         on_delete=models.SET_NULL,
-        null=True,  # Allow Media without a Brand
-        blank=True,  # Allow empty in forms/admin
-        related_name='media'  # Access Media from Brand via `brand.media`
+        null=True,
+        blank=True,
+        related_name='media'
     )
     image = models.ImageField(
         upload_to='products/',
@@ -119,24 +112,22 @@ class Media(models.Model):
         validators=[FileExtensionValidator(['pdf'])],
         help_text='Upload product specification PDF'
     )
-    name = models.CharField(max_length=50, unique=True, blank=False, null=False)
+    name = models.CharField(max_length=50)
 
     class Meta:
         unique_together = [
             ('image', 'pdf', 'name'),
             ('image', 'pdf'),
-        ]                                        ### check if this is good
+        ]
 
     def __str__(self):
         return f"{self.name}"
-
 
 class Brand(models.Model):
     name = models.CharField(max_length=50, unique=True, blank=False, null=False)
 
     def __str__(self):
         return f"{self.name}"
-
 
 class SubcategoryAttribute(models.Model):
     attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
@@ -147,7 +138,6 @@ class SubcategoryAttribute(models.Model):
 
     def __str__(self):
         return f"{self.subcategory} - {self.attribute}"
-
 
 class Product(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
@@ -162,7 +152,6 @@ class Product(models.Model):
 
     def __str__(self):
         return f"{self.brand} - {self.subcategory} - {self.name}"
-
 
 class Model(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -216,14 +205,11 @@ class SubcategoryAttributeModelString(models.Model):
     class Meta:
         unique_together = [
             ('subcategory_attribute','string'),
-            ('model', 'string'),
-            ('model', 'subcategory_attribute'),
             ('subcategory_attribute', 'string', 'model')
         ]
 
     def __str__(self):
         return f"{self.subcategory_attribute} - {self.model} - {self.string}"
-
 
 class SubcategoryAttributeModelInteger(models.Model):
     subcategory_attribute = models.ForeignKey(SubcategoryAttribute, on_delete=models.CASCADE)
@@ -233,14 +219,11 @@ class SubcategoryAttributeModelInteger(models.Model):
     class Meta:
         unique_together = [
             ('subcategory_attribute','integer'),
-            ('model', 'integer'),
-            ('model', 'subcategory_attribute'),
             ('subcategory_attribute', 'integer', 'model')
         ]
 
     def __str__(self):
         return f"{self.subcategory_attribute} - {self.model} - {self.integer}"
-
 
 class SubcategoryAttributeModelDecimal(models.Model):
     subcategory_attribute = models.ForeignKey(SubcategoryAttribute, on_delete=models.CASCADE)
@@ -264,8 +247,6 @@ class SubcategoryAttributeModelRangedInteger(models.Model):
     class Meta:
         unique_together = [
             ('subcategory_attribute','ranged_integer'),
-            ('model', 'ranged_integer'),
-            ('model', 'subcategory_attribute'),
             ('subcategory_attribute', 'ranged_integer', 'model')
         ]
 
@@ -280,8 +261,6 @@ class SubcategoryAttributeModelRangedDecimal(models.Model):
     class Meta:
         unique_together = [
             ('subcategory_attribute','ranged_decimal'),
-            ('model', 'ranged_decimal'),
-            ('model', 'subcategory_attribute'),
             ('subcategory_attribute', 'ranged_decimal', 'model')
         ]
 

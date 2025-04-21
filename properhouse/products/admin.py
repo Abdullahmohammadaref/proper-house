@@ -1,18 +1,12 @@
 import nested_admin
-from pdb import post_mortem
-
 from django.contrib import admin
 from .models import *
-from django.contrib.contenttypes.admin import GenericTabularInline
-from django.utils.html import format_html
-from django import forms
-
 
 class MediaInline(admin.TabularInline):
     model = Media
-    can_delete = False  # Prevent deleting Media if Brand is saved
-    max_num = 1         # Allow only 1 Media per Brand (OneToOne)
-    fields = ('image', 'name')  # Exclude 'brand' field (auto-linked)
+    can_delete = False
+    max_num = 1         #(OneToOne)
+    fields = ('image', 'name')
 
 class ModelMediaInline(nested_admin.NestedTabularInline):
     model = ModelMedia
@@ -115,9 +109,12 @@ class RangedIntegerAdmin(admin.ModelAdmin):
 
 '''
 problems and tasks:
-1- task: make autonaming for media with the help of __str__ for the model
-2- problem: one model can have a attributes(like wat, volt, etc) from another subcategory (it should only be able to have access to the attributes of its own subcategory)
-3- order the models in admin terminal in this order: Brand, Category, Subcategory, Products
-4- fix the venv
+1- Database should be translatable to arabic somehow (support the change from left to right in language)
+1- problem: one model can have a attributes(like wat, volt, etc) from another subcategory (it should only be able to have access to the attributes of its own subcategory)(i need to fix this problem from server side and admin interface side to only show options for relative subcategory)
+2- add additonal fields like slug, web_id etc
+3- fix small problem in model.py line 202
+4- task: make autonaming for media with the help of __str__ for the model
+5- order the models in admin terminal in this order: Brand, Category, Subcategory, Products
+6- fix the venv
 '''
 
