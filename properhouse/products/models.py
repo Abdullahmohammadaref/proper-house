@@ -27,27 +27,34 @@ class Decimal(models.Model):
 
 
 class RangedDecimal(models.Model):
-    min_value = models.DecimalField(max_digits=10, decimal_places=2, unique=True, blank=False, null=False)
-    max_value = models.DecimalField(max_digits=10, decimal_places=2, unique=True, blank=False, null=False)
+    min_value = models.DecimalField(max_digits=10, decimal_places=2, null=False)
+    max_value = models.DecimalField(max_digits=10, decimal_places=2, null=False)
 
     def values_range(self):
         values_range = (self.min_value, self.max_value)
         return values_range
 
+    class Meta:
+        unique_together = ('min_value', 'max_value')
+
     def __str__(self):
-        return f"{self.min_value} - {self.max_value}"
+        return f"{self.min_value}-{self.max_value}"
 
 
 class RangedInteger(models.Model):
-    min_value = models.IntegerField(unique=True, blank=False, null=False)
-    max_value = models.IntegerField(unique=True, blank=False, null=False)
+    min_value = models.IntegerField(blank=False, null=False)
+    max_value = models.IntegerField(blank=False, null=False)
 
     def values_range(self):
         values_range = (self.min_value, self.max_value)
         return values_range
 
+    class Meta:
+        unique_together = ('min_value', 'max_value')
+
     def __str__(self):
         return f"{self.min_value} - {self.max_value}"
+
 
 class Category(models.Model):
     name = models.CharField(max_length=50, unique=True, blank=False, null=False)
@@ -57,7 +64,7 @@ class Category(models.Model):
 
 class Attribute(models.Model):
     name = models.CharField(max_length=50, unique=True, blank=False, null=False)
-    value = models.ManyToManyField()
+
     def __str__(self):
         return f"{self.name}"
 
@@ -70,78 +77,12 @@ class Subcategory(models.Model):
         related_name='subcategory'
     )
 
+    class Meta:
+        unique_together = ('category', 'name')
+
+
     def __str__(self):
         return f"{self.name}"
-
-
-
-
-class AttributeValue(models.Model):
-    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
-    value =
-
-    class Meta:
-        unique_together = ('attribute',)
-
-    def __str__(self):
-        return f"{self.attribute}:{self.value}"
-    """
-
-
-    class AttributeValueString(models.Model):
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    string = models.ForeignKey(String, on_delete=models.CASCADE)
-
-class AttributeValueInteger(models.Model):
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    integer = models.ForeignKey(Integer, on_delete=models.CASCADE)
-
-class AttributeValueDecimal(models.Model):
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    decimal = models.ForeignKey(Decimal, on_delete=models.CASCADE)
-
-class AttributeValueRangedDecimal(models.Model):
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    ranged_decimal = models.ForeignKey(RangedDecimal, on_delete=models.CASCADE)
-
-class AttributeValueRangedInteger(models.Model):
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    ranged_integer = models.ForeignKey(RangedInteger, on_delete=models.CASCADE)
-    """
-
-
-"""
-class AttributeValue(models.Model):
-    attribute = models.ForeignKey(Attribute, on_delete=models.CASCADE)
-    string_values = models.JSONField(default=list, null=True, blank=True)
-    integer_values = ...
-    decimal_values = ...
-    ranged_integer_value = ..
-    ranged_decimal_value = ...
-
-    def value(self):
-        values = 0
-        attribute_value = None
-        value_attributes = [self.string_values, self.integer_values, self.decimal_values, self.ranged_integer_value, self.ranged_decimal_value]
-        for value in value_attributes:
-            if value is not None:
-                values += values
-                attribute_value = value
-        if values != 1:
-            raise ValueError
-        else:
-            return attribute_value
-
-    value = value
-
-    class Meta:
-        unique_together = ('name', 'value')
-
-    def __str__(self):
-
-         f"{self.attribute}:{self.value}"   ## there is a missing return here 
-"""
-
 
 class Media(models.Model):
     brand = models.OneToOneField(
@@ -178,9 +119,16 @@ class Media(models.Model):
         validators=[FileExtensionValidator(['pdf'])],
         help_text='Upload product specification PDF'
     )
+    name = models.CharField(max_length=50, unique=True, blank=False, null=False)
 
     class Meta:
-        unique_together = ('image', 'pdf')
+        unique_together = [
+            ('image', 'pdf', 'name'),
+            ('image', 'pdf'),
+        ]                                        ### check if this is good
+
+    def __str__(self):
+        return f"{self.name}"
 
 
 class Brand(models.Model):
@@ -197,6 +145,9 @@ class SubcategoryAttribute(models.Model):
     class Meta:
         unique_together = ('attribute', 'subcategory')
 
+    def __str__(self):
+        return f"{self.subcategory} - {self.attribute}"
+
 
 class Product(models.Model):
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
@@ -204,10 +155,13 @@ class Product(models.Model):
     name = models.CharField(max_length=50, unique=True, blank=False, null=False)
 
     class Meta:
-        unique_together = ('brand', 'subcategory', 'name')
+        unique_together = [
+            ('brand', 'subcategory', 'name'),
+            ('brand', 'subcategory'),
+        ]
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.brand} - {self.subcategory} - {self.name}"
 
 
 class Model(models.Model):
@@ -215,22 +169,37 @@ class Model(models.Model):
     model_letter = models.CharField(max_length=10, blank=True, null=False)
     model_number = models.IntegerField(blank=False, null=False)
     media = models.ManyToManyField(Media, through="ModelMedia")
-    attribute_values = models.ManyToManyField(AttributeValue, through="ModelAttribute")
 
-    class Meta:
-        unique_together = ('product', 'model_letter', 'model_number')
+    string_values = models.ManyToManyField(String, through="SubcategoryAttributeModelString")
+    integer_values = models.ManyToManyField(Integer, through="SubcategoryAttributeModelInteger")
+    decimal_values = models.ManyToManyField(Decimal, through="SubcategoryAttributeModelDecimal")
+    ranged_integer_value = models.ManyToManyField(RangedInteger, through="SubcategoryAttributeModelRangedInteger")
+    ranged_decimal_value = models.ManyToManyField(RangedDecimal, through="SubcategoryAttributeModelRangedDecimal")
+
+    def value(self):
+        values = 0
+        attribute_value = None
+        value_attributes = [self.string_values, self.integer_values, self.decimal_values, self.ranged_integer_value,
+                            self.ranged_decimal_value]
+        for value in value_attributes:
+            if value is not None:
+                values += values
+                attribute_value = value
+        if values != 1:
+            raise ValueError("A subcategory attribute cannot have less than or more than 1 value")
+        else:
+            return attribute_value
+
+    value = value
+
+    unique_together = [
+        ('model_number', 'model_letter', 'product', 'value'),
+        ('model_number', 'model_letter', 'product'),
+        ('model_number', 'model_letter'),
+    ]
 
     def __str__(self):
-        return f"{self.model_letter}{self.model_number}"
-
-
-class ModelAttribute(models.Model):
-    attribute_value = models.ForeignKey(AttributeValue, on_delete=models.CASCADE)
-    model = models.ForeignKey(Model, on_delete=models.CASCADE)
-
-    class Meta:
-        unique_together = ('attribute_value', 'model')
-
+        return f"{self.product} - {self.model_letter}{self.model_number}"  # i removed  - {self.value} here becaue i got eror, find solution
 
 class ModelMedia(models.Model):
     model = models.ForeignKey(Model, on_delete=models.CASCADE)
@@ -239,15 +208,85 @@ class ModelMedia(models.Model):
     class Meta:
         unique_together = ('media', 'model')
 
+class SubcategoryAttributeModelString(models.Model):
+    subcategory_attribute = models.ForeignKey(SubcategoryAttribute, on_delete=models.CASCADE)
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    string = models.ForeignKey(String, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [
+            ('subcategory_attribute','string'),
+            ('model', 'string'),
+            ('model', 'subcategory_attribute'),
+            ('subcategory_attribute', 'string', 'model')
+        ]
+
+    def __str__(self):
+        return f"{self.subcategory_attribute} - {self.model} - {self.string}"
 
 
+class SubcategoryAttributeModelInteger(models.Model):
+    subcategory_attribute = models.ForeignKey(SubcategoryAttribute, on_delete=models.CASCADE)
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    integer = models.ForeignKey(Integer, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [
+            ('subcategory_attribute','integer'),
+            ('model', 'integer'),
+            ('model', 'subcategory_attribute'),
+            ('subcategory_attribute', 'integer', 'model')
+        ]
+
+    def __str__(self):
+        return f"{self.subcategory_attribute} - {self.model} - {self.integer}"
 
 
+class SubcategoryAttributeModelDecimal(models.Model):
+    subcategory_attribute = models.ForeignKey(SubcategoryAttribute, on_delete=models.CASCADE)
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    decimal = models.ForeignKey(Decimal, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = [
+            ('subcategory_attribute','decimal'),
+            ('subcategory_attribute', 'decimal', 'model')
+        ]
 
+    def __str__(self):
+        return f"{self.subcategory_attribute} - {self.model} - {self.decimal}"
 
+class SubcategoryAttributeModelRangedInteger(models.Model):
+    subcategory_attribute = models.ForeignKey(SubcategoryAttribute, on_delete=models.CASCADE)
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    ranged_integer = models.ForeignKey(RangedInteger, on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = [
+            ('subcategory_attribute','ranged_integer'),
+            ('model', 'ranged_integer'),
+            ('model', 'subcategory_attribute'),
+            ('subcategory_attribute', 'ranged_integer', 'model')
+        ]
 
+    def __str__(self):
+        return f"{self.subcategory_attribute} - {self.model} - {self.ranged_integer}"
+
+class SubcategoryAttributeModelRangedDecimal(models.Model):
+    subcategory_attribute = models.ForeignKey(SubcategoryAttribute, on_delete=models.CASCADE)
+    model = models.ForeignKey(Model, on_delete=models.CASCADE)
+    ranged_decimal = models.ForeignKey(RangedDecimal, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = [
+            ('subcategory_attribute','ranged_decimal'),
+            ('model', 'ranged_decimal'),
+            ('model', 'subcategory_attribute'),
+            ('subcategory_attribute', 'ranged_decimal', 'model')
+        ]
+
+    def __str__(self):
+        return f"{self.subcategory_attribute} - {self.model} - {self.ranged_decimal}"
 
 
 
